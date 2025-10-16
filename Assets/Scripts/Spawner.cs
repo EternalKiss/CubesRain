@@ -34,9 +34,23 @@ public class Spawner : MonoBehaviour
         cube.Hitted += ReleaseCube;
     }
 
+    private void ReleaseCube(Cube cube)
+    {
+        cube.Hitted -= ReleaseCube;
+        _cubesPool.Release(cube);
+        cube.ResetCube();
+    }
+
     private void OnRelease(Cube cube)
     {
         cube.gameObject.SetActive(false);
+    }
+
+    private Vector3 GetSpawnPosition()
+    {
+        float positionX = Random.Range(0, _randomPositionSpawnX);
+        float positionY = Random.Range(0, _randomPositionSpawnY);
+        return new Vector3(positionX, _positionSpawnZ, positionY);
     }
 
     private IEnumerator SpawnCubesPerCooldown()
@@ -53,21 +67,6 @@ public class Spawner : MonoBehaviour
             }
         }
     }
-
-    private void ReleaseCube(Cube cube)
-    {
-        cube.Hitted -= ReleaseCube;
-        _cubesPool.Release(cube);
-        cube.ResetCube();
-    }
-
-    private Vector3 GetSpawnPosition()
-    {
-        float positionX = Random.Range(0, _randomPositionSpawnX);
-        float positionY = Random.Range(0, _randomPositionSpawnY);
-        return new Vector3(positionX, _positionSpawnZ, positionY);
-    }
-
     private void OnEnable()
     {
         _spawnCoroutine = StartCoroutine(SpawnCubesPerCooldown());

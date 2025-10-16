@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+[RequireComponent(typeof(Renderer))]
 public class Cube : MonoBehaviour
 {
     private Renderer _renderer;
@@ -19,18 +20,13 @@ public class Cube : MonoBehaviour
         _renderer = GetComponent<Renderer>();
     }
 
-    private void ChangeColor()
-    {
-        _renderer.material.color = Random.ColorHSV();
-    }
-
     public void ResetCube()
     {
         _renderer.material.color = _defaultColor;
         _isHitted = false;
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
-        transform.localScale = Vector3.one;
+        transform.localScale = Vector3.zero;
     }
 
     private IEnumerator DetermineLifetime()
@@ -44,11 +40,16 @@ public class Cube : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (_isHitted == false && collision.gameObject.TryGetComponent<MeshCollider>(out _))
+        if (_isHitted == false && collision.gameObject.TryGetComponent<Terrain>(out _))
         {
             ChangeColor();
             _isHitted = true;
             StartCoroutine(DetermineLifetime());
         }
+    }
+
+    private void ChangeColor()
+    {
+        _renderer.material.color = Random.ColorHSV();
     }
 }
