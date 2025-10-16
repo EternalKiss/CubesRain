@@ -27,6 +27,37 @@ public class Spawner : MonoBehaviour
             maxSize: _poolMaxSize);
     }
 
+    private void OnEnable()
+    {
+        _spawnCoroutine = StartCoroutine(SpawnCubesPerCooldown());
+    }
+
+    private void OnDisable()
+    {
+        if (_spawnCoroutine != null)
+        {
+            StopCoroutine(_spawnCoroutine);
+            _spawnCoroutine = null;
+        }
+
+        _cubesPool?.Clear();
+    }
+
+    private IEnumerator SpawnCubesPerCooldown()
+    {
+        var wait = new WaitForSeconds(_repeatRate);
+
+        while (enabled)
+        {
+            yield return wait;
+
+            if (_cubesPool.CountActive < _poolMaxSize)
+            {
+                _cubesPool.Get();
+            }
+        }
+    }
+
     private void ActionOnGet(Cube cube)
     {
         cube.transform.position = GetSpawnPosition();
@@ -51,35 +82,5 @@ public class Spawner : MonoBehaviour
         float positionX = Random.Range(0, _randomPositionSpawnX);
         float positionY = Random.Range(0, _randomPositionSpawnY);
         return new Vector3(positionX, _positionSpawnZ, positionY);
-    }
-
-    private IEnumerator SpawnCubesPerCooldown()
-    {
-        var wait = new WaitForSeconds(_repeatRate);
-
-        while (enabled)
-        {
-            yield return wait;
-
-            if (_cubesPool.CountActive < _poolMaxSize)
-            {
-                _cubesPool.Get();
-            }
-        }
-    }
-    private void OnEnable()
-    {
-        _spawnCoroutine = StartCoroutine(SpawnCubesPerCooldown());
-    }
-
-    private void OnDisable()
-    {
-        if (_spawnCoroutine != null)
-        {
-            StopCoroutine(_spawnCoroutine);
-            _spawnCoroutine = null;
-        }
-
-        _cubesPool?.Clear();
     }
 }

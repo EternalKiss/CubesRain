@@ -20,6 +20,16 @@ public class Cube : MonoBehaviour
         _renderer = GetComponent<Renderer>();
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (_isHitted == false && collision.gameObject.TryGetComponent<TerrainCollider>(out _))
+        {
+            ChangeColor();
+            _isHitted = true;
+            StartCoroutine(DetermineLifetime());
+        }
+    }
+
     private IEnumerator DetermineLifetime()
     {
         var wait = new WaitForSeconds(Random.Range(_minLifeTime, _maxLifeTime));
@@ -27,16 +37,6 @@ public class Cube : MonoBehaviour
         yield return wait;
 
         Hitted?.Invoke(this);
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (_isHitted == false && collision.gameObject.TryGetComponent<Terrain>(out _))
-        {
-            ChangeColor();
-            _isHitted = true;
-            StartCoroutine(DetermineLifetime());
-        }
     }
 
     private void ChangeColor()
