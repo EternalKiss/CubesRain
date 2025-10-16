@@ -20,15 +20,6 @@ public class Cube : MonoBehaviour
         _renderer = GetComponent<Renderer>();
     }
 
-    public void ResetCube()
-    {
-        _renderer.material.color = _defaultColor;
-        _isHitted = false;
-        transform.position = Vector3.zero;
-        transform.rotation = Quaternion.identity;
-        transform.localScale = Vector3.zero;
-    }
-
     private IEnumerator DetermineLifetime()
     {
         var wait = new WaitForSeconds(Random.Range(_minLifeTime, _maxLifeTime));
@@ -51,5 +42,14 @@ public class Cube : MonoBehaviour
     private void ChangeColor()
     {
         _renderer.material.color = Random.ColorHSV();
+    }
+
+    public void ResetCube()
+    {
+        _renderer.material.color = _defaultColor;
+        _isHitted = false;
+        transform.position = Vector3.zero;
+        transform.rotation = Quaternion.identity;
+        transform.localScale = Vector3.one;
     }
 }
