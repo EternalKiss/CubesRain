@@ -1,34 +1,54 @@
+using System;
+using System.Collections;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Cube : MonoBehaviour
 {
-    [SerializeField] Collider _triggerColider;
     private Renderer _renderer;
+    private Color _defaultColor = Color.white;
 
-    private float _delayInSeconds;
-    private float _minDelay = 2;
-    private float _maxDelay = 5;
+    private bool _isHitted;
+    private int _minLifeTime = 2;
+    private int _maxLifeTime = 6;
+
+    public event Action<Cube> Hitted;
 
     private void Awake()
     {
         _renderer = GetComponent<Renderer>();
     }
 
-    private void OnTriggerEnter()
+    private void ChangeColor()
     {
-        ColorChanger();
-        Destroy();
+        _renderer.material.color = Random.ColorHSV();
     }
 
-    private void ColorChanger()
+    public void ResetCube()
     {
-        Color color = Random.ColorHSV();
-        _renderer.material.color = color;
+        _renderer.material.color = _defaultColor;
+        _isHitted = false;
+        transform.position = Vector3.zero;
+        transform.rotation = Quaternion.identity;
+        transform.localScale = Vector3.one;
     }
 
-    private void Destroy()
+    private IEnumerator DetermineLifetime()
     {
-        _delayInSeconds = Random.Range(_minDelay, _maxDelay);
-        Destroy(gameObject, _delayInSeconds);
+        var wait = new WaitForSeconds(Random.Range(_minLifeTime, _maxLifeTime));
+
+        yield return wait;
+
+        Hitted?.Invoke(this);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (_isHitted == false && collision.gameObject.TryGetComponent<MeshCollider>(out _))
+        {
+            ChangeColor();
+            _isHitted = true;
+            StartCoroutine(DetermineLifetime());
+        }
     }
 }

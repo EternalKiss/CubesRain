@@ -1,50 +1,64 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private GameObject _cubePrebaf;
+    [SerializeField] private Cube _cubePrefab;
     [SerializeField] private float _repeatRate = 1f;
-    [SerializeField] private int _poolCapacity = 10;
-    [SerializeField] private int _poolMaxSize = 10;
+    [SerializeField] private int _poolCapacity = 3;
+    [SerializeField] private int _poolMaxSize = 3;
     [SerializeField] private float _randomPositionSpawnX;
     [SerializeField] private float _randomPositionSpawnY;
     [SerializeField] private float _positionSpawnZ = 5f;
 
-    private ObjectPool<GameObject> _cubesPool;
+    private ObjectPool<Cube> _cubesPool;
+    private Coroutine _spawnCoroutine;
 
     private void Awake()
     {
-        _cubesPool = new ObjectPool<GameObject>(
-            createFunc: () => Instantiate(_cubePrebaf),
+        _cubesPool = new ObjectPool<Cube>(
+            createFunc: () => Instantiate(_cubePrefab),
             actionOnGet: (cube) => ActionOnGet(cube),
-            actionOnRelease: (cube) => cube.SetActive(false),
-            actionOnDestroy: (cube) => Destroy(cube),
+            actionOnRelease: (cube) => OnRelease(cube),
+            actionOnDestroy: (cube) => Destroy(cube.gameObject),
             collectionCheck: true,
             defaultCapacity: _poolCapacity,
             maxSize: _poolMaxSize);
     }
 
-    private void ActionOnGet(GameObject cube)
+    private void ActionOnGet(Cube cube)
     {
         cube.transform.position = GetSpawnPosition();
-        cube.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
-        cube.SetActive(true);
+        cube.gameObject.SetActive(true);
+        cube.Hitted += ReleaseCube;
     }
 
-    private void Start()
+    private void OnRelease(Cube cube)
     {
-        InvokeRepeating(nameof(GetCube), 0.0f, _repeatRate);
+        cube.gameObject.SetActive(false);
     }
 
-    private void GetCube()
+    private IEnumerator SpawnCubesPerCooldown()
     {
-        _cubesPool.Get();
+        var wait = new WaitForSeconds(_repeatRate);
+
+        while (enabled)
+        {
+            yield return wait;
+
+            if (_cubesPool.CountActive < _poolMaxSize)
+            {
+                _cubesPool.Get();
+            }
+        }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void ReleaseCube(Cube cube)
     {
-        _cubesPool.Release(other.gameObject);
+        cube.Hitted -= ReleaseCube;
+        _cubesPool.Release(cube);
+        cube.ResetCube();
     }
 
     private Vector3 GetSpawnPosition()
@@ -52,5 +66,21 @@ public class Spawner : MonoBehaviour
         float positionX = Random.Range(0, _randomPositionSpawnX);
         float positionY = Random.Range(0, _randomPositionSpawnY);
         return new Vector3(positionX, _positionSpawnZ, positionY);
+    }
+
+    private void OnEnable()
+    {
+        _spawnCoroutine = StartCoroutine(SpawnCubesPerCooldown());
+    }
+
+    private void OnDisable()
+    {
+        if (_spawnCoroutine != null)
+        {
+            StopCoroutine(_spawnCoroutine);
+            _spawnCoroutine = null;
+        }
+
+        _cubesPool?.Clear();
     }
 }
